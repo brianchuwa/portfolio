@@ -1,0 +1,3 @@
+# requirements.txt
+# mysqlclient==x.x.x
+SQLAlchemy==2.0.23

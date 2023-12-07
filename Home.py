@@ -1,8 +1,7 @@
-import uuid
+""" This is the portfolio page """
 from pathlib import Path
-import streamlit as st
 from PIL import Image
-import os
+import streamlit as st
 
 st.set_page_config(
     page_title="Brian Chuwa",
@@ -17,11 +16,14 @@ css_file = current_dir / "styles" / "main.css"
 # profile_pic = current_dir / "assets" / "brian_chuwa_hero_image.png"
 profile_pic_filename = "assets/brian_chuwa_hero_image.png"
 
+# Load the image using Pillow
+profile_pic = Image.open(profile_pic_filename)
+
 
 # --- GENERAL SETTINGS ---
 NAME = "Brian Chuwa"
 DESCRIPTION = """
-I am a results-driven, experienced finance professional, self-taught data analyst, and web developer passionate about digital transformation.
+I am an experienced finance professional, self-taught data analyst, and web developer passionate about digital transformation.
 """
 EMAIL = "hello@brian.co.tz"
 SOCIAL_MEDIA = {
@@ -31,28 +33,15 @@ SOCIAL_MEDIA = {
     "Twitter": "https://twitter.com/BrianChuwa",
 }
 
-# --- LOAD CSS, PDF & PROFIL PIC ---
-with open(css_file) as f:
+# Specify the encoding (e.g., 'utf-8') when opening the file
+with open(css_file, encoding='utf-8') as f:
     st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
-# with open(resume_file, "rb") as pdf_file:
-#     PDFbyte = pdf_file.read()
-# profile_pic = Image.open(profile_pic)
 
 
 # --- HERO SECTION ---
 col1, col2 = st.columns(2, gap="small")
 with col1:
-   # st.image(profile_pic, width=230)
-   # Check if the file exists
-    if os.path.exists(profile_pic_filename):
-        # Open the image file
-        with open(profile_pic_filename, "rb") as f:
-            profile_pic = f.read()
-
-        # Display the image in Streamlit app
-        st.image(profile_pic, width=230)
-    else:
-        st.warning(f"Profile picture not found at {profile_pic_filename}")
+    st.image(profile_pic, width=230)
 
 with col2:
     st.title(NAME)
@@ -124,8 +113,3 @@ st.write('\n')
 # Custom footer
 st.markdown('<div id="made-by">Made by Brian Chuwa</div>',
             unsafe_allow_html=True)
-
-
-hidden_variable = str(uuid.uuid4())
-st.session_state.hidden_variable = hidden_variable
-st.write(hidden_variable)

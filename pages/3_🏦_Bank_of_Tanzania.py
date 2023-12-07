@@ -1,83 +1,73 @@
-from pathlib import Path
+import secrets
 import streamlit as st
 
-st.set_page_config(
-    page_title="BOT Insights",
-    page_icon="🏦",
-    layout="wide",
-    # initial_sidebar_state="expanded",
+# Function to format number with commas
+
+
+def format_with_commas(number):
+    """
+    Format a numeric value with commas for display purposes.
+
+    Parameters:
+    - number (float or int): The numeric value to be formatted.
+
+    Returns:
+    - str or None: The formatted string with commas if the input is not None, otherwise None.
+    """
+    return f"{number:,.0f}" if number is not None else None
+
+
+# User input for the amount
+amount = st.number_input("Enter the amount", min_value=0, value=None)
+
+# Display the formatted amount (with commas) as the user types
+st.markdown(f"***Formatted Amount: {format_with_commas(amount)}***")
+
+products = st.multiselect(
+    "Products Offered", ['Green', 'Yellow', 'Red', 'Blue'], default=None)
+horizon_options = ["In 2 years or less.",
+                   "Within 3 - 5 years.", "Within 06 - 08 years."]
+horizon_values = {'In 2 years or less.': 1,
+                  'Within 3 - 5 years.': 5, 'Within 06 - 08 years.': 8}
+horizon = st.radio(
+    "1. How long would you invest the majority of your money before you think you would need access to it?",
+    horizon_options,
+    index=None,
 )
 
-st.write("# Coming Soon! ")
+security_options = ["Not secure.", "Somewhat secure.", "Fairly secure."]
+security_values = {'Not secure.': 1,
+                   'Somewhat secure.': 5, 'Fairly secure.': 8}
+security = st.radio(
+    "2. How secure is your current and future income from sources such as salary, pensions or other investments?",
+    security_options,
+    index=None,
+)
 
-# --- PATH SETTINGS ---
-current_dir = Path(__file__).parent if "__file__" in locals() else Path.cwd()
-css_file = current_dir.parent / "styles" / "main.css"
-
-# --- LOAD CSS ---
-# with open(css_file) as f:
-#     st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
-
-
-# def overview():
-#     st.title("Chat App Overview")
-#     st.write("Welcome to our chat app! This is an overview of the app.")
-#     if st.button("Next"):
-#         st.session_state.step = "User Details"
-
-state = st.session_state.step = "User Details"
-
-
-def user_details():
-    st.title("User Details Form")
-    user_name = st.text_input("Your Name")
-    user_email = st.text_input("Your Email")
-
-    if st.button("Next"):
-        # Process user details and move to the next step
-        st.success("User details submitted successfully!")
-        st.session_state.step = "Chat"
+net_wealth_options = ["Less than Tshs 100 million", "Between Tshs 100 million and Tshs 300 million",
+                      "Between Tshs 300 million and Tshs 500 million"]
+net_wealth_values = {'Less than Tshs 100 million': 1, 'Between Tshs 100 million and Tshs 300 million': 5,
+                     'Between Tshs 300 million and Tshs 500 million': 8}
+net_wealth = st.radio(
+    "3. What would you estimate your Net Worth to be; that is total assets less liabilities?",
+    net_wealth_options,
+    index=None,
+)
 
 
-def chat():
-    st.title("Chat with ChatGPT")
-    # Your chat interface here
-    st.title("Echo Bot")
-
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # React to user input
-    if prompt := st.chat_input("What is up?"):
-        # Display user message in chat message container
-        st.chat_message("user").markdown(prompt)
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-
-        response = f"Echo: {prompt}"
-        # Display assistant response in chat message container
-        with st.chat_message("assistant"):
-            st.markdown(response)
-        # Add assistant response to chat history
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response})
+st.session_state.products = products
+st.session_state.horizon = horizon
+st.session_state.security = security
+st.session_state.net_wealth = net_wealth
 
 
-def main():
-    if "step" not in st.session_state:
-        st.session_state.step = "User Details"
-
-    if st.session_state.step == "User Details":
-        user_details()
-    elif st.session_state.step == "Chat":
-        chat()
+total_score = horizon_values.get(
+    horizon, 0) + security_values.get(security, 0) + net_wealth_values.get(net_wealth, 0)
+st.session_state.total_score = total_score
 
 
-if __name__ == "__main__":
-    main()
+st.write("You selected:", total_score)
+
+
+random_string = secrets.token_hex(20)
+st.write(random_string)

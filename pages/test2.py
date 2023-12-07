@@ -11,9 +11,41 @@ def user_details():
     onboarding_date = st.date_input(label="Onboarding Date", value=None)
     products = st.multiselect(
         "Products Offered", ['Green', 'Yellow', 'Red', 'Blue'], default=None)
+    horizon_options = ["In 2 years or less.",
+                       "Within 3 - 5 years.", "Within 06 - 08 years."]
+    horizon_values = {'In 2 years or less.': 1,
+                      'Within 3 - 5 years.': 5, 'Within 06 - 08 years.': 8}
+    horizon = st.radio(
+        "1. How long would you invest the majority of your money before you think you would need access to it?",
+        horizon_options,
+        index=None,
+    )
+
+    security_options = ["Not secure.", "Somewhat secure.", "Fairly secure."]
+    security_values = {'Not secure.': 1,
+                       'Somewhat secure.': 5, 'Fairly secure.': 8}
+    security = st.radio(
+        "2. How secure is your current and future income from sources such as salary, pensions or other investments?",
+        security_options,
+        index=None,
+    )
+
+    net_wealth_options = ["Less than Tshs 100 million", "Between Tshs 100 million and Tshs 300 million",
+                          "Between Tshs 300 million and Tshs 500 million"]
+    net_wealth_values = {'Less than Tshs 100 million': 1, 'Between Tshs 100 million and Tshs 300 million': 5,
+                         'Between Tshs 300 million and Tshs 500 million': 8}
+    net_wealth = st.radio(
+        "3. What would you estimate your Net Worth to be; that is total assets less liabilities?",
+        net_wealth_options,
+        index=None,
+    )
 
     # Generate a random UUID as a hidden variable
     hidden_variable = str(uuid.uuid4())
+
+    # Calculate total score
+    total_score = horizon_values.get(
+        horizon, 0) + security_values.get(security, 0) + net_wealth_values.get(net_wealth, 0)
 
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
@@ -28,10 +60,27 @@ def user_details():
         st.session_state.user_email = user_email
         st.session_state.onboarding_date = onboarding_date
         st.session_state.products = products
+        st.session_state.horizon = horizon
+        st.session_state.security = security
+        st.session_state.net_wealth = net_wealth
         st.session_state.hidden_variable = hidden_variable  # Store in session state
 
-        save_to_database(user_name, user_email,
-                         hidden_variable, onboarding_date, products)
+        st.session_state.total_score = total_score
+
+        # Create a dictionary with the user details
+        user_details_dict = {
+            "user_name": user_name,
+            "user_email": user_email,
+            "onboarding_date": onboarding_date,
+            "products": products,
+            "horizon": horizon,
+            "security": security,
+            "net_wealth": net_wealth,
+            "hidden_variable": hidden_variable,
+            "total_score": total_score,
+        }
+
+        save_to_database(**user_details_dict)
 
     if (
         st.button(label="Next") or st.session_state.button_clicked
@@ -43,10 +92,11 @@ def user_details():
             st.session_state.step = "Chat"
             if st.session_state.step == "Chat":
                 # save_to_database(user_name, user_email)
-                chat(user_name, user_email)
+                chat(user_name, user_email, hidden_variable,
+                     onboarding_date, products, horizon, security, net_wealth, total_score)
 
 
-def save_to_database(user_name, user_email, hidden_variable, onboarding_date, products):
+def save_to_database(user_name, user_email, hidden_variable, onboarding_date, products, horizon, security, net_wealth, total_score):
     try:
         # Display a spinner while sending data
         with st.spinner("Sending data to MySQL database..."):
@@ -58,6 +108,8 @@ def save_to_database(user_name, user_email, hidden_variable, onboarding_date, pr
 
             # Join selected products into a single string
             formatted_products = ", ".join(products)
+
+            total_score_int = int(total_score)
 
             with conn.session as s:
                 # Assuming 'client_details' is the table name
@@ -72,17 +124,25 @@ def save_to_database(user_name, user_email, hidden_variable, onboarding_date, pr
                     "hidden_variable": [hidden_variable],
                     "onboarding_date": [formatted_onboarding_date],
                     "products": [formatted_products],
+                    "horizon": [horizon],
+                    "security": [security],
+                    "net_wealth": [net_wealth],
+                    "total_score_int": [total_score_int],
                 }
 
                 for i in range(len(data["user_name"])):
                     s.execute(
-                        text('INSERT INTO client_details (user_name, user_email, hidden_variable, onboarding_date, products) VALUES (:user_name, :user_email, :hidden_variable, :onboarding_date, :products);'),
+                        text('INSERT INTO client_details (user_name, user_email, hidden_variable, onboarding_date, products, horizon, security, net_wealth, total_score_int) VALUES (:user_name, :user_email, :hidden_variable, :onboarding_date, :products, :horizon, :security, :net_wealth, :total_score_int);'),
                         params={
                             "user_name": data["user_name"][i],
                             "user_email": data["user_email"][i],
                             "hidden_variable": data["hidden_variable"][i],
                             "onboarding_date": data["onboarding_date"][i],
                             "products": data["products"][i],
+                            "horizon": data["horizon"][i],
+                            "security": data["security"][i],
+                            "net_wealth": data["net_wealth"][i],
+                            "total_score_int": data["total_score_int"][i],
                         }
                     )
 
@@ -94,11 +154,16 @@ def save_to_database(user_name, user_email, hidden_variable, onboarding_date, pr
         st.error(f"Error: {e}")
 
 
-def chat(user_name, user_email):
+def chat(user_name, user_email, hidden_variable,
+         onboarding_date, products, horizon, security, net_wealth, total_score):
     st.title("Chat with ChatGPT")
 
+    st.write(net_wealth)
+    st.write(total_score)
+
     st.write(
-        f"Hello {user_name} ({user_email})!")
+        f"Name: {user_name}\nEmail: {user_email}\nHidden Variable: {hidden_variable}\nOnboarding Date: {onboarding_date}\nProducts: {products}\nSecurity: {security}\nHorizon: {horizon}\nNet Wealth: {net_wealth}\nTotal Score: {total_score}"
+    )
     # Your chat interface here
     st.title("Echo Bot")
 
@@ -136,7 +201,15 @@ def main():
     if st.session_state.step == "User Details":
         user_details()
     elif st.session_state.step == "Chat":
-        chat(st.session_state.user_name, st.session_state.user_email)
+        chat(st.session_state.user_name,
+             st.session_state.user_email,
+             st.session_state.hidden_variable,
+             st.session_state.onboarding_date,
+             st.session_state.products,
+             st.session_state.horizon,
+             st.session_state.security,
+             st.session_state.net_wealth,
+             st.session_state.total_score)
 
 
 if __name__ == "__main__":

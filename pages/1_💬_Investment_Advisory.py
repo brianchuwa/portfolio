@@ -16,21 +16,45 @@ st.set_page_config(
 main_css = open("styles/main_pages.css", encoding='utf-8').read()
 st.markdown(f'<style>{main_css}</style>', unsafe_allow_html=True)
 
+#### ---- INVESTOR FORM -----########
+
 
 def user_details():
     """
-    Display a user details form using Streamlit.
+    Captures and processes user details for investment advisory form.
 
-    The function prompts the user to input their personal details and select 
-    best answer from a set of multiple questions. It then generates a random UUID
-    as a hidden variable and calculates a total score based on the selected options.
+    This function displays the form and gathers the following information from the user:
+        * Full name
+        * Amount to invest
+        * Gender
+        * Age
+        * Location
+        * Phone number
+        * Email address
+        * Occupation
+        * Risk profile questions
+            * Investment horizon
+            * Income security
+            * Net worth
+            * Investment experience
+            * Investment familiarity
+            * Source of funds
+            * Focus on potential gains vs. losses
+            * Choice of investment portfolio
+            * Current investment holdings
+            * Action taken during market downturn
+        * Additional questions
+            * Insurance coverage
+            * Purpose for the portfolio
 
-    Parameters:
-    - None
+    The function validates the user input and saves the information to a database.
+    It also calculates the total risk score based on the user's responses to the risk profile questions.
+    It also generates a unique id for each client.
 
     Returns:
-    - None
+        None
     """
+
     # Center-aligned Title
     st.markdown("<h1 style='text-align: center;'>💰Investment Advisory</h1>",
                 unsafe_allow_html=True)
@@ -154,7 +178,7 @@ def user_details():
         index=None,
     )
 
-    # net_worth
+    # net_wealth
     net_wealth_options = ["Less than Tshs 100 million",
                           "Between Tshs 100 million and Tshs 300 million",
                           "Between Tshs 300 million and Tshs 500 million",
@@ -333,10 +357,12 @@ def user_details():
     st.write('\n')
     st.write('\n')
 
+    warning_container = st.empty()
+
     # ----- END OF FORM FOR THE USER ------
 
-    # Generate a random UUID as a hidden variable
-    hidden_variable = str(uuid.uuid4())
+    # Generate a random UUID as a investor_uuid (to identify investor)
+    investor_uuid = str(uuid.uuid4())
 
     # Calculate total score
     total_score = horizon_values.get(
@@ -345,33 +371,63 @@ def user_details():
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
 
+    # Create a list to store the names of empty fields
+    empty_fields = []
+
     def callback():
-        if not user_name or not user_email:
-            st.warning("Please fill in all fields before starting the chat.")
+        if not full_name or not amount_to_invest or not gender or not age or not location or not phone_number or not email or not occupation or not horizon or not security or not net_wealth or not experience or not familiar or not source or not impact or not choice or not current_own or not action or not insured or not purpose:
+            st.warning("Please fill in all fields.")
             return
+
         st.session_state.button_clicked = True
         st.session_state.step = "Chat"
-        st.session_state.user_name = user_name
-        st.session_state.user_email = user_email
-        st.session_state.onboarding_date = onboarding_date
-        st.session_state.products = products
+
+        st.session_state.full_name = full_name
+        st.session_state.amount_to_invest = amount_to_invest
+        st.session_state.gender = gender
+        st.session_state.age = age
+        st.session_state.location = location
+        st.session_state.phone_number = phone_number
+        st.session_state.email = email
+        st.session_state.occupation = occupation
         st.session_state.horizon = horizon
         st.session_state.security = security
         st.session_state.net_wealth = net_wealth
-        st.session_state.hidden_variable = hidden_variable  # Store in session state
-
+        st.session_state.experience = experience
+        st.session_state.familiar = familiar
+        st.session_state.source = source
+        st.session_state.impact = impact
+        st.session_state.choice = choice
+        st.session_state.current_own = current_own
+        st.session_state.action = action
+        st.session_state.insured = insured
+        st.session_state.purpose = purpose
+        st.session_state.investor_uuid = investor_uuid
         st.session_state.total_score = total_score
 
         # Create a dictionary with the user details
         user_details_dict = {
-            "user_name": user_name,
-            "user_email": user_email,
-            "onboarding_date": onboarding_date,
-            "products": products,
+            "full_name": full_name,
+            "amount_to_invest": amount_to_invest,
+            "gender": gender,
+            "age": age,
+            "location": location,
+            "phone_number": phone_number,
+            "email": email,
+            "occupation": occupation,
             "horizon": horizon,
             "security": security,
             "net_wealth": net_wealth,
-            "hidden_variable": hidden_variable,
+            "experience": experience,
+            "familiar": familiar,
+            "source": source,
+            "impact": impact,
+            "choice": choice,
+            "current_own": current_own,
+            "action": action,
+            "insured": insured,
+            "purpose": purpose,
+            "investor_uuid": investor_uuid,
             "total_score": total_score,
         }
 
@@ -386,74 +442,159 @@ def user_details():
             # st.balloons()
             st.session_state.step = "Chat"
             if st.session_state.step == "Chat":
-                # save_to_database(user_name, user_email)
-                chat(user_name, user_email, hidden_variable,
-                     onboarding_date, products, horizon, security, net_wealth, total_score)
+                chat(full_name, amount_to_invest, gender, age, location, phone_number, email, occupation, horizon, security, net_wealth,
+                     experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score)
+
+    warning_message = "<div style='color: red;'>Please fill all the fields fields, if not, the submit button would disappear</div>"
+    st.markdown(warning_message, unsafe_allow_html=True)
+
+##### ------- SEND FORM DATA TO DATABASE -------######
 
 
-def save_to_database(user_name, user_email, hidden_variable, onboarding_date, products, horizon, security, net_wealth, total_score):
+def save_to_database(full_name, amount_to_invest, gender, age,
+                     location, phone_number, email, occupation, horizon, security, net_wealth,
+                     experience, familiar, source, impact, choice, current_own, action,
+                     insured, purpose, investor_uuid, total_score):
+    """
+    Saves investor data to the MySQL database.
+
+    Args:
+        full_name (str): Full name of the investor
+        amount_to_invest (str): Amount the investor intends to invest
+        gender (str): Gender of the investor
+        age (str): Age of the investor
+        location (str): Location of the investor
+        phone_number (str): Phone number of the investor
+        email (str): Email address of the investor
+        occupation (str): Occupation of the investor
+        horizon (str): Investment horizon of the investor
+        security (str): Security preferences of the investor
+        net_wealth (str): Net wealth of the investor
+        experience (str): Investment experience of the investor
+        familiar (str): Familiarity with crypto investments
+        source (str): Source of information about the advisory service
+        impact (str): Importance of impact investing
+        choice (str): Preferred investment choice
+        current_own (str): Currently owned investments
+        action (str): Preferred next action
+        insured (str): Preference for insurance
+        purpose (str): Purpose of investment
+        investor_uuid (str): Unique identifier for the investor
+        total_score (str): Total score from the risk assessment
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If any errors occur while saving data to the database.
+    """
     try:
         # Display a spinner while sending data
         with st.spinner("Sending data to MySQL database..."):
             # Establish a connection to MySQL
             conn = st.connection('advisory_client_mysql', type='sql')
 
-            # Convert the date to the desired format
-            formatted_onboarding_date = onboarding_date.strftime("%Y-%m-%d")
-
-            # Join selected products into a single string
-            formatted_products = ", ".join(products)
-
+            # Convert variables from string to interger
+            amount_to_invest_int = int(amount_to_invest)
+            age_int = int(age)
             total_score_int = int(total_score)
 
             with conn.session as s:
                 # Prepare the data to be sent to MySQL
                 data = {
-                    "user_name": [user_name],
-                    "user_email": [user_email],
-                    "hidden_variable": [hidden_variable],
-                    "onboarding_date": [formatted_onboarding_date],
-                    "products": [formatted_products],
+                    "full_name": [full_name],
+                    "amount_to_invest_int": [amount_to_invest_int],
+                    "gender": [gender],
+                    "age_int": [age_int],
+                    "location": [location],
+                    "phone_number": [phone_number],
+                    "email": [email],
+                    "occupation": [occupation],
                     "horizon": [horizon],
                     "security": [security],
                     "net_wealth": [net_wealth],
+                    "experience": [experience],
+                    "familiar": [familiar],
+                    "source": [source],
+                    "impact": [impact],
+                    "choice": [choice],
+                    "current_own": [current_own],
+                    "action": [action],
+                    "insured": [insured],
+                    "purpose": [purpose],
+                    "investor_uuid": [investor_uuid],
                     "total_score_int": [total_score_int],
                 }
 
-                for i in range(len(data["user_name"])):
+                for i in range(len(data["full_name"])):
                     s.execute(
-                        text('INSERT INTO client_details (user_name, user_email, hidden_variable, onboarding_date, products, horizon, security, net_wealth, total_score_int) VALUES (:user_name, :user_email, :hidden_variable, :onboarding_date, :products, :horizon, :security, :net_wealth, :total_score_int);'),
+                        text('INSERT INTO investor_profile (full_name, amount_to_invest_int, gender, age_int, location, phone_number, email, occupation, horizon, security, net_wealth, experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score_int) VALUES (:full_name, :amount_to_invest_int, :gender, :age_int, :location, :phone_number, :email, :occupation, :horizon, :security, :net_wealth, :experience, :familiar, :source, :impact, :choice, :current_own, :action, :insured, :purpose, :investor_uuid, :total_score_int);'),
                         params={
-                            "user_name": data["user_name"][i],
-                            "user_email": data["user_email"][i],
-                            "hidden_variable": data["hidden_variable"][i],
-                            "onboarding_date": data["onboarding_date"][i],
-                            "products": data["products"][i],
+                            "full_name": data["full_name"][i],
+                            "amount_to_invest_int": data["amount_to_invest_int"][i],
+                            "gender": data["gender"][i],
+                            "age_int": data["age_int"][i],
+                            "location": data["location"][i],
+                            "phone_number": data["phone_number"][i],
+                            "email": data["email"][i],
+                            "occupation": data["occupation"][i],
                             "horizon": data["horizon"][i],
                             "security": data["security"][i],
                             "net_wealth": data["net_wealth"][i],
+                            "experience": data["experience"][i],
+                            "familiar": data["familiar"][i],
+                            "source": data["source"][i],
+                            "impact": data["impact"][i],
+                            "choice": data["choice"][i],
+                            "current_own": data["current_own"][i],
+                            "action": data["action"][i],
+                            "insured": data["insured"][i],
+                            "purpose": data["purpose"][i],
+                            "investor_uuid": data["investor_uuid"][i],
                             "total_score_int": data["total_score_int"][i],
                         }
                     )
 
                 s.commit()
 
-            st.success("Data successfully saved to the MySQL database.")
+            st.success("Data successfully processed.")
 
     except Exception as e:
         st.error(f"Error: {e}")
 
 
-def chat(user_name, user_email, hidden_variable,
-         onboarding_date, products, horizon, security, net_wealth, total_score):
-    st.title("Chat with ChatGPT")
+def chat(full_name, amount_to_invest, gender, age, location, phone_number, email, occupation, horizon, security, net_wealth,
+         experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score):
 
-    st.write(net_wealth)
-    st.write(total_score)
+    received_variables = {
+        "full_name": full_name,
+        "amount_to_invest": amount_to_invest,
+        "gender": gender,
+        "age": age,
+        "location": location,
+        "phone_number": phone_number,
+        "email": email,
+        "occupation": occupation,
+        "horizon": horizon,
+        "security": security,
+        "net_wealth": net_wealth,
+        "experience": experience,
+        "familiar": familiar,
+        "source": source,
+        "impact": impact,
+        "choice": choice,
+        "current_own": current_own,
+        "action": action,
+        "insured": insured,
+        "purpose": purpose,
+        "investor_uuid": investor_uuid,
+        "total_score": total_score
+    }
 
-    st.write(
-        f"Name: {user_name}\nEmail: {user_email}\nHidden Variable: {hidden_variable}\nOnboarding Date: {onboarding_date}\nProducts: {products}\nSecurity: {security}\nHorizon: {horizon}\nNet Wealth: {net_wealth}\nTotal Score: {total_score}"
-    )
+    filtered_variables = {key: value for key,
+                          value in received_variables.items() if value is not None}
+
+    st.write(f"{filtered_variables}")
     # Your chat interface here
     st.title("Echo Bot")
 
@@ -483,22 +624,46 @@ def chat(user_name, user_email, hidden_variable,
 
 
 def main():
+    """
+    This function manages the main flow of the application.
+
+    **Steps:**
+
+    1. **Check session state for current step:**
+        - If "step" is not found, set it to "User Details".
+    2. **Execute the appropriate function based on the current step:**
+        - If "step" is "User Details":
+            - Call the `user_details` function to collect user information.
+        - If "step" is "Chat":
+            - Call the `chat` function with user information stored in session state.
+    """
     if "step" not in st.session_state:
         st.session_state.step = "User Details"
-        # st.session_state.user_name = None
-        # st.session_state.user_email = None
 
     if st.session_state.step == "User Details":
         user_details()
     elif st.session_state.step == "Chat":
-        chat(st.session_state.user_name,
-             st.session_state.user_email,
-             st.session_state.hidden_variable,
-             st.session_state.onboarding_date,
-             st.session_state.products,
+        chat(st.session_state.full_name,
+             st.session_state.amount_to_invest,
+             st.session_state.gender,
+             st.session_state.age,
+             st.session_state.location,
+             st.session_state.phone_number,
+             st.session_state.email,
+             st.session_state.occupation,
              st.session_state.horizon,
              st.session_state.security,
              st.session_state.net_wealth,
+             st.session_state.experience,
+             st.session_state.familiar,
+             st.session_state.source,
+             st.session_state.impact,
+             st.session_state.choice,
+             st.session_state.current_own,
+             st.session_state.action,
+             st.session_state.insured,
+             st.session_state.purpose,
+             st.session_state.investor_uuid,
              st.session_state.total_score)
 
 

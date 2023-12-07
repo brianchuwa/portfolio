@@ -1,0 +1,28 @@
+full_name
+amount_to_invest
+gender
+age
+location
+phone_number
+email
+occupation
+horizon
+security
+net_wealth
+experience
+familiar
+source
+impact
+choice
+current_own
+action
+insured
+purpose
+investor_uuid
+total_score
+
+full_name,	amount_to_invest,	gender,	age,	location,	phone_number,	email,	occupation,	horizon,	security,	net_wealth,	experience,	familiar,	source,	impact,	choice,	current_own,	action,	insured,	purpose,	investor_uuid,	total_score
+
+full_name,	amount_to_invest_int,	gender,	age,	location,	phone_number,	email,	occupation,	horizon,	security,	net_wealth,	experience,	familiar,	source,	impact,	choice,	current_own,	action,	insured,	purpose,	investor_uuid,	total_score
+
+full_name, amount_to_invest_int, gender, age_int, location, phone_number, email, occupation, horizon, security, net_wealth, experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score_int

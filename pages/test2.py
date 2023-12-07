@@ -43,9 +43,57 @@ def user_details():
     # Generate a random UUID as a hidden variable
     hidden_variable = str(uuid.uuid4())
 
+    # Define investor profiles, descriptions, and strategies; these are categories of the total score
+    investor_profiles = {
+        "0-20": "Conservative",
+        "21-40": "Moderate",
+        "41-60": "Balanced",
+        "61-80": "Assertive",
+        "81-100": "Aggressive",
+    }
+    profile_descriptions = {
+        "0-20": "Conservative investors primarily seek capital preservation and are willing to accept lower potential investment returns in exchange. They may invest in government bonds, corporate bonds, and cash investments.",
+        "21-40": "Moderate investors seek a balance between capital growth and capital security. They may invest in a mix of government bonds, corporate bonds, large-cap equity, and cash investments.",
+        "41-60": "Balanced investors seek capital growth while also preserving a portion of their capital. They may invest in a mix of large-cap equity, corporate bonds, and government bonds.",
+        "61-80": "Assertive investors prioritize capital growth and are willing to take on more risk to achieve it. They may invest in a mix of large-cap equity, small-cap equity, corporate bonds, and government bonds.",
+        "81-100": "Aggressive investors are willing to take on the highest level of risk in pursuit of capital growth. They may invest in a mix of large-cap equity, small-cap equity, and corporate bonds.",
+    }
+    strategies = {
+        "0-20": "50\\% Government Bonds; 20% Corporate Bonds; 30% Cash Investments",
+        "21-40": "50\\% Government Bonds; 25% Corporate Bonds; 15\\% Large-Cap Equity; 10% Cash Investments",
+        "41-60": "45\\% Large-Cap Equity; 35\\% Government Bonds; 15% Corporate Bonds; 5% Cash Investments",
+        "61-80": "45\\% Large-Cap Equity; 20% Corporate Bonds; 15\\% Government Bonds; 15% Small-Cap Equity; 5% Cash Investments",
+        "81-100": "60\\% Large-Cap Equity; 25% Small-Cap Equity; 10% Corporate Bonds; 5% Cash Investments",
+    }
+
     # Calculate total score
     total_score = horizon_values.get(
         horizon, 0) + security_values.get(security, 0) + net_wealth_values.get(net_wealth, 0)
+
+    # Determine investor profile based on total score
+    investor_profile = investor_profiles.get(str(total_score)[:2])
+
+    # Define profile_description and strategy before the conditional statement
+    profile_description = None
+    strategy = None
+
+    # Move the assignment of profile_description and strategy within the conditional statement
+    if investor_profile:
+        profile_description = profile_descriptions.get(investor_profile)
+        strategy = strategies.get(investor_profile)
+    else:
+        # Handle case where profile_description is None
+        st.error("Unable to determine profile description.")
+
+    # Add variables to session state
+    st.session_state["investor_profile"] = investor_profile
+    st.session_state["profile_description"] = profile_description
+    st.session_state["strategy"] = strategy
+
+    # Display the investor profile, description, and strategy
+    st.write(f"Investor profile: {investor_profile}")
+    st.write(f"Profile description: {profile_description}")
+    st.write(f"Investment strategy: {strategy}")
 
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False

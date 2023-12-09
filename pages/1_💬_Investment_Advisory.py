@@ -434,10 +434,10 @@ def user_details():
         save_to_database(**user_details_dict)
 
     if (
-        st.button(label="Next") or st.session_state.button_clicked
+        st.button(label="Done") or st.session_state.button_clicked
     ):
         # Process user details and move to the next step
-        if st.button("Start Chat",
+        if st.button("Submit Form",
                      on_click=callback):
             # st.balloons()
             st.session_state.step = "Chat"
@@ -445,7 +445,7 @@ def user_details():
                 chat(full_name, amount_to_invest, gender, age, location, phone_number, email, occupation, horizon, security, net_wealth,
                      experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score)
 
-    warning_message = "<div style='color: red;'>Please fill all the fields fields, if not, the submit button would disappear</div>"
+    warning_message = "<div style='color: red;'>Please fill all the fields, if not, the submit button would disappear</div>"
     st.markdown(warning_message, unsafe_allow_html=True)
 
 ##### ------- SEND FORM DATA TO DATABASE -------######
@@ -567,28 +567,25 @@ def chat(full_name, amount_to_invest, gender, age, location, phone_number, email
          experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score):
 
     received_variables = {
-        "full_name": full_name,
-        "amount_to_invest": amount_to_invest,
-        "gender": gender,
-        "age": age,
+        "My Full Name:": full_name,
+        "Amount to invest (TZS):": amount_to_invest,
+        "My Gender": gender,
+        "Age": age,
         "location": location,
-        "phone_number": phone_number,
-        "email": email,
         "occupation": occupation,
-        "horizon": horizon,
-        "security": security,
-        "net_wealth": net_wealth,
-        "experience": experience,
-        "familiar": familiar,
-        "source": source,
-        "impact": impact,
-        "choice": choice,
-        "current_own": current_own,
-        "action": action,
-        "insured": insured,
-        "purpose": purpose,
-        "investor_uuid": investor_uuid,
-        "total_score": total_score
+        "Qn 1. How long would you invest the majority of your money before you think you would need access to it? My answer:": horizon,
+        "Qn 2. How secure is your current and future income from sources such as salary, pensions or other investments? My answer:": security,
+        "Qn 3. What would you estimate your Net Worth to be; that is total assets less liabilities? My answer:": net_wealth,
+        "Qn 4. If you have borrowed before to invest how would you rate your experience? My answer:": experience,
+        "Qn 5. How familiar are you with investment matters? My answer:": familiar,
+        "Qn 6. What is the source of the fund you want to invest? My answer:": source,
+        "Qn 7. When considering your investments and making investment decisions, do you think about the impact of possible losses or possible gains? My answer:": impact,
+        "Qn 8. The table below shows the highest one year gain and highest one-year loss on five different hypothetical investments of Tshs 1,000,000. Given the potential gain or loss in any one year, where would you invest your money? My answer:": choice,
+        "Qn 9. Select an investment you currently own or have owned in the past My answer:": current_own,
+        "Qn 10. Imagine that in the past three months, the overall stock market lost 25\\% of its value. An individual stock investment you own also lost 25\\% of its value (that is from Tshs 1,000,000 to Tshs 750,000). My answer:": action,
+        "Do you feel you are appropriately covered against personal and/or business risks such as accident, illness, trauma or death? My answer:": insured,
+        "What is the primary purpose for this portfolio? Why do you want to invest this money? My answer:": purpose,
+        "total_score My answer:": total_score
     }
 
     filtered_variables = {key: value for key,

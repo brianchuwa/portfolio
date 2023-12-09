@@ -4,24 +4,13 @@ import streamlit as st
 # Function to format number with commas
 
 
-def format_with_commas(number):
-    """
-    Format a numeric value with commas for display purposes.
+# text_input = st.text_input(
+#         "Enter some text 👇",
+#         label_visibility=hidden,
+#         # disabled=st.session_state.disabled,
+#         # placeholder=st.session_state.placeholder,
+#     )
 
-    Parameters:
-    - number (float or int): The numeric value to be formatted.
-
-    Returns:
-    - str or None: The formatted string with commas if the input is not None, otherwise None.
-    """
-    return f"{number:,.0f}" if number is not None else None
-
-
-# User input for the amount
-amount = st.number_input("Enter the amount", min_value=0, value=None)
-
-# Display the formatted amount (with commas) as the user types
-st.markdown(f"***Formatted Amount: {format_with_commas(amount)}***")
 
 products = st.multiselect(
     "Products Offered", ['Green', 'Yellow', 'Red', 'Blue'], default=None)

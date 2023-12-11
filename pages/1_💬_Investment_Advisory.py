@@ -1,8 +1,14 @@
 """ Investment advisory app, takes users profile and chats with AI advisor """
 import uuid
-import streamlit as st
+import time
+import os
+import json
 import pandas as pd
 from sqlalchemy import text
+import streamlit as st
+import openai
+from dotenv import load_dotenv
+load_dotenv()
 
 
 st.set_page_config(
@@ -557,7 +563,7 @@ def save_to_database(full_name, amount_to_invest, gender, age,
 
                 s.commit()
 
-            st.success("Data successfully processed.")
+            # st.success("Data successfully processed.")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -565,6 +571,36 @@ def save_to_database(full_name, amount_to_invest, gender, age,
 
 def chat(full_name, amount_to_invest, gender, age, location, phone_number, email, occupation, horizon, security, net_wealth,
          experience, familiar, source, impact, choice, current_own, action, insured, purpose, investor_uuid, total_score):
+    """
+    This function facilitates a chat conversation between the user and an OpenAI Assistant.
+
+    Args:
+        full_name (str): Full name of the user.
+        amount_to_invest (str): Amount the user intends to invest.
+        gender (str): Gender of the user.
+        age (int): Age of the user.
+        location (str): User's location.
+        phone_number (str): User's phone number.
+        email (str): User's email address.
+        occupation (str): User's occupation.
+        horizon (int): Investment horizon chosen by the user.
+        security (int): User's income security rating.
+        net_wealth (int): User's estimated net worth.
+        experience (int): User's experience with investing.
+        familiar (int): Level of user's familiarity with investment matters.
+        source (str): Source of the funds the user wants to invest.
+        impact (str): User's preference for considering potential losses or gains.
+        choice (str): User's investment choice based on a hypothetical scenario.
+        current_own (str): Investment currently owned by the user.
+        action (str): User's action towards a hypothetical market loss scenario.
+        insured (str): User's insurance coverage status.
+        purpose (str): User's primary purpose for investing.
+        investor_uuid (str): Unique identifier for the investor.
+        total_score (float): Total score obtained from the user's responses.
+
+    Returns:
+        None: This function doesn't return any value, but it updates the state of the conversation with the assistant.
+    """
 
     received_variables = {
         "My Full Name:": full_name,
@@ -573,51 +609,129 @@ def chat(full_name, amount_to_invest, gender, age, location, phone_number, email
         "Age": age,
         "location": location,
         "occupation": occupation,
-        "Qn 1. How long would you invest the majority of your money before you think you would need access to it? My answer:": horizon,
-        "Qn 2. How secure is your current and future income from sources such as salary, pensions or other investments? My answer:": security,
-        "Qn 3. What would you estimate your Net Worth to be; that is total assets less liabilities? My answer:": net_wealth,
-        "Qn 4. If you have borrowed before to invest how would you rate your experience? My answer:": experience,
-        "Qn 5. How familiar are you with investment matters? My answer:": familiar,
-        "Qn 6. What is the source of the fund you want to invest? My answer:": source,
-        "Qn 7. When considering your investments and making investment decisions, do you think about the impact of possible losses or possible gains? My answer:": impact,
-        "Qn 8. The table below shows the highest one year gain and highest one-year loss on five different hypothetical investments of Tshs 1,000,000. Given the potential gain or loss in any one year, where would you invest your money? My answer:": choice,
-        "Qn 9. Select an investment you currently own or have owned in the past My answer:": current_own,
-        "Qn 10. Imagine that in the past three months, the overall stock market lost 25\\% of its value. An individual stock investment you own also lost 25\\% of its value (that is from Tshs 1,000,000 to Tshs 750,000). My answer:": action,
-        "Do you feel you are appropriately covered against personal and/or business risks such as accident, illness, trauma or death? My answer:": insured,
-        "What is the primary purpose for this portfolio? Why do you want to invest this money? My answer:": purpose,
+        "Qn 1. How long would you invest the majority of your money before you think you would need access to it? My answer": horizon,
+        "Qn 2. How secure is your current and future income from sources such as salary, pensions or other investments? My answer": security,
+        "Qn 3. What would you estimate your Net Worth to be; that is total assets less liabilities? My answer": net_wealth,
+        "Qn 4. If you have borrowed before to invest how would you rate your experience? My answer": experience,
+        "Qn 5. How familiar are you with investment matters? My answer": familiar,
+        "Qn 6. What is the source of the fund you want to invest? My answer": source,
+        "Qn 7. When considering your investments and making investment decisions, do you think about the impact of possible losses or possible gains? My answer": impact,
+        "Qn 8. The table below shows the highest one year gain and highest one-year loss on five different hypothetical investments of Tshs 1,000,000. Given the potential gain or loss in any one year, where would you invest your money? My answer": choice,
+        "Qn 9. Select an investment you currently own or have owned in the past My answer": current_own,
+        "Qn 10. Imagine that in the past three months, the overall stock market lost 25\\% of its value. An individual stock investment you own also lost 25\\% of its value (that is from Tshs 1,000,000 to Tshs 750,000). My answer": action,
+        "Do you feel you are appropriately covered against personal and/or business risks such as accident, illness, trauma or death? My answer": insured,
+        "What is the primary purpose for this portfolio? Why do you want to invest this money? My answer": purpose,
         "total_score My answer:": total_score
     }
 
-    filtered_variables = {key: value for key,
+    investor_statement = {key: value for key,
                           value in received_variables.items() if value is not None}
 
-    st.write(f"{filtered_variables}")
+    investor_statement_string = json.dumps(investor_statement)
     # Your chat interface here
-    st.title("Echo Bot")
+    st.title("Chat with your Investment Advisor")
+    st.text("You can start by asking: What is my investor profile?")
 
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Set your OpenAI Assistant ID here
+    assistant_id = os.getenv('ASSISTANT_ID')
 
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Initialize the OpenAI client (ensure to set your API key in the sidebar within the app)
+    client = openai
 
-    # React to user input
-    if prompt := st.chat_input("What is up?"):
-        # Display user message in chat message container
-        st.chat_message("user").markdown(prompt)
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # Initialize session state variables for file IDs and chat control
+    if "file_id_list" not in st.session_state:
+        st.session_state.file_id_list = []
 
-        response = f"Echo: {prompt}"
-        # Display assistant response in chat message container
-        with st.chat_message("assistant"):
-            st.markdown(response)
-        # Add assistant response to chat history
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response})
+    if "start_chat" not in st.session_state:
+        st.session_state.start_chat = True
+
+    if "thread_id" not in st.session_state:
+        st.session_state.thread_id = None
+
+    # Get the OPENAI API Key
+    openai_api_key_env = os.getenv('OPENAI_API_KEY')
+    openai_api_key = openai_api_key_env
+
+    if openai_api_key:
+        openai.api_key = openai_api_key
+
+    thread = client.beta.threads.create()
+    st.session_state.thread_id = thread.id
+    # st.write("thread id: ", thread.id)
+
+    # Define the function to process messages with citations
+
+    def process_message_with_citations(message):
+        message_content = message.content[0].text.value
+        return message_content
+
+        # Send the initial message from investor_statement
+    if investor_statement_string:
+        client.beta.threads.messages.create(
+            thread_id=st.session_state.thread_id,
+            role="user",
+            content=investor_statement_string
+        )
+
+    # Only show the chat interface if the chat has been started
+    if st.session_state.start_chat:
+        # st.write(getStockPrice('AAPL'))
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
+        # Display existing messages in the chat
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Chat input for the user
+        if prompt := st.chat_input("How can I help you?"):
+            # Add user message to the state and display it
+            st.session_state.messages.append(
+                {"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Add the user's message to the existing thread
+            client.beta.threads.messages.create(
+                thread_id=st.session_state.thread_id,
+                role="user",
+                content=prompt
+            )
+
+            # Create a run with additional instructions
+            run = client.beta.threads.runs.create(
+                thread_id=st.session_state.thread_id,
+                assistant_id=assistant_id,
+                instructions="Please provide investment advisory as per the instructions given on the file 'Investory Profile Questionnaire - Sheet1.pdf' and the answer questions based on files uploaded"
+            )
+
+            # Poll for the run to complete and retrieve the assistant's messages
+            while run.status not in ["completed", "failed"]:
+                st.sidebar.write(run.status)
+                time.sleep(1)
+                run = client.beta.threads.runs.retrieve(
+                    thread_id=st.session_state.thread_id,
+                    run_id=run.id
+                )
+            st.sidebar.write(run.status)
+
+            # Retrieve messages added by the assistant
+            messages = client.beta.threads.messages.list(
+                thread_id=st.session_state.thread_id
+            )
+
+            # Process and display assistant messages
+            assistant_messages_for_run = [
+                message for message in messages
+                if message.run_id == run.id and message.role == "assistant"
+            ]
+            for message in assistant_messages_for_run:
+                full_response = process_message_with_citations(message)
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": full_response})
+                with st.chat_message("assistant"):
+                    st.markdown(full_response, unsafe_allow_html=True)
 
 
 def main():

@@ -4,6 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+streamlit = "*"
+pillow = "*"
+mysqlclient = "*"
+sqlalchemy = "*"
+openai = "*"
+load-dotenv = "*"
 
 [dev-packages]
 

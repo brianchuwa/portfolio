@@ -363,8 +363,6 @@ def user_details():
     st.write('\n')
     st.write('\n')
 
-    warning_container = st.empty()
-
     # ----- END OF FORM FOR THE USER ------
 
     # Generate a random UUID as a investor_uuid (to identify investor)
@@ -376,9 +374,6 @@ def user_details():
 
     if "button_clicked" not in st.session_state:
         st.session_state.button_clicked = False
-
-    # Create a list to store the names of empty fields
-    empty_fields = []
 
     def callback():
         if not full_name or not amount_to_invest or not gender or not age or not location or not phone_number or not email or not occupation or not horizon or not security or not net_wealth or not experience or not familiar or not source or not impact or not choice or not current_own or not action or not insured or not purpose:
@@ -628,9 +623,38 @@ def chat(full_name, amount_to_invest, gender, age, location, phone_number, email
                           value in received_variables.items() if value is not None}
 
     investor_statement_string = json.dumps(investor_statement)
+
+    assistant_instruction = """
+    you are an investment advisor based in Tanzania for clients who have money to invest in the Tanzanian capital market and they need to know the strategy they use to invest, where to invest and also mostly of these clients do not have knowledge about the Tanzania capital market, you will respond to their questions that seeks to understand the tanzanian capital market. The ares of focus are the stock market (Dar es Salaam Stock Exchange), commercial banks (cash investments such as fixed deposits) and the Bank of Tanzania (government bonds and government bills)
+    you will be as a chatbot in the application, but before an investor gets to you, they must first fill the form to determine their investor profile. Among the documents attached, there is an investor profile questionnaire pdf, this pdf is the inspiration of the form investors will fill. from the pdf you can see different investor profiles based on the total score from a series of multiple choices, where each choice carries a mask. there are five profiles; Conservative (score 0 to 20), moderate (score 21 to 40), balanced (score 41 to 60), Assertive/Growth (score 61 to 80) and Aggressive (score 81 to 100).
+    so, before an investor chats with you, they will first share their details, all risk profile questions and their answers, additional questions and answers and their total score. and this is what you will do;
+    1. Introduction:
+    - Greet and welcome the investor, introducing yourself as an Artificial Intelligent Investment Advisor with in-depth knowledge of the Tanzanian capital market.
+    - Assure them that their data is secure.
+
+    2. Investor Profile:
+    - Based on their total score, categorize them into one of five investor profiles: Conservative, Moderate, Balanced, Assertive/Growth, or Aggressive (as indicated on the investor profile questionnaire pdf in the files).
+    - Provide a brief description and investment strategy for their respective profile.
+    - Suggest an allocation strategy for the amount they want to invest and give examples of investment securities available in the Tanzanian capital market.
+
+    3. Insights Based on Score:
+    - Explain that the total score provides a general overview.
+    - Briefly outline the factors contributing to their score.
+    - Clarify that the advice is based on a general perspective.
+
+    4. Detailed Advice:
+    provide more advice based on:
+    - Consider their investment horizon: Suggest equity market for long-term (>2 years) investments, emphasizing knowledge requirements.
+    - Assess occupation-related risks: In case of significant risks, inquire about life insurance and recommend subscribing before investing.
+    - Evaluate the primary purpose for the portfolio: Provide tailored advice on the best-fit investment based on their goals.
+    """
     # Your chat interface here
     st.title("Chat with your Investment Advisor")
     st.text("You can start by asking: What is my investor profile?")
+    st.text("What is my investment strategy?")
+
+    st.write('\n')
+    st.divider()
 
     # Set your OpenAI Assistant ID here
     assistant_id = os.getenv('ASSISTANT_ID')
@@ -703,7 +727,7 @@ def chat(full_name, amount_to_invest, gender, age, location, phone_number, email
             run = client.beta.threads.runs.create(
                 thread_id=st.session_state.thread_id,
                 assistant_id=assistant_id,
-                instructions="Please provide investment advisory as per the instructions given on the file 'Investory Profile Questionnaire - Sheet1.pdf' and the answer questions based on files uploaded"
+                instructions=assistant_instruction
             )
 
             # Poll for the run to complete and retrieve the assistant's messages

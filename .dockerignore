@@ -1,0 +1,17 @@
+# Ignore general files
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.log
+*.sqlite
+
+# Ignore specific directories
+/assets
+/styles
+/pages/.ipynb_checkpoints
+/.streamlit

@@ -10,6 +10,10 @@ mysqlclient = "*"
 sqlalchemy = "*"
 openai = "*"
 load-dotenv = "*"
+google-cloud-bigquery = "*"
+streamlit-option-menu = "*"
+pandasai = "*"
+pymysql = "*"
 
 [dev-packages]
 
